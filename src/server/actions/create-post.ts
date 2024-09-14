@@ -1,22 +1,21 @@
 "use server";
 
-import { z } from "zod";
-import { createPostSchema, posts } from "@/db/schema";
+import { formSchema } from "@/components/postform";
 import { db } from "@/db/drizzle";
+import { posts } from "@/db/schema";
+import { createSafeActionClient } from "next-safe-action";
 import { revalidatePath } from "next/cache";
 
-type CreatePost = z.infer<typeof createPostSchema>;
+export const action = createSafeActionClient();
 
-export const createPost = async (values: CreatePost) => {
-	const newPost = await db
-		.insert(posts)
-		.values(values)
-		.returning()
-		.then((res) => res[0]);
+export const createPost = action
+	.schema(formSchema)
+	.action(async ({ parsedInput: { content } }) => {
+		const newPost = await db.insert(posts).values({ content }).returning();
 
-	if (!newPost) return { error: "Could not create post" };
+		if (!newPost) return { error: "Something went wrong" };
 
-	revalidatePath("/");
+		revalidatePath("/");
 
-	return { success: newPost };
-};
+		return { success: newPost };
+	});
