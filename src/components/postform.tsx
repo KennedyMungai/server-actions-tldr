@@ -14,7 +14,6 @@ import { createPost } from "@/server/actions/create-post";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UpdateIcon } from "@radix-ui/react-icons";
 import { useAction } from "next-safe-action/hooks";
-import { revalidatePath } from "next/cache";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
