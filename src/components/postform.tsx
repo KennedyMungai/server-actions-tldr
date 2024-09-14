@@ -12,14 +12,47 @@ import {
 import { Input } from "@/components/ui/input";
 import { createPost } from "@/server/actions/create-post";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { UpdateIcon } from "@radix-ui/react-icons";
+import { useAction } from "next-safe-action/hooks";
+import { revalidatePath } from "next/cache";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import z from "zod";
 
-const formSchema = z.object({
+export const formSchema = z.object({
 	content: z.string().min(2, { message: "Post is required" }),
 });
 
 const PostForm = () => {
+	const { execute, status } = useAction(createPost, {
+		onExecute() {
+			toast.loading(
+				<div className="flex gap-x-4 items-center">
+					<UpdateIcon className="size-6 animate-spin" />{" "}
+					<span className="font-semibold text-lg">Creating post</span>
+				</div>,
+				{
+					id: "creating-post",
+				},
+			);
+		},
+		onSuccess({ data }) {
+			if (data?.success) {
+				toast.success(data?.success);
+				toast.dismiss("creating-post");
+			}
+		},
+		onError({ error }) {
+			if (error.serverError) {
+				toast.error("Something went wrong");
+			} else if (error.validationErrors) {
+				toast.error("There is something wrong with the inputs");
+			}
+
+			toast.dismiss("create-post");
+		},
+	});
+
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -27,8 +60,11 @@ const PostForm = () => {
 		},
 	});
 
-	const onSubmit = async (values: z.infer<typeof formSchema>) =>
-		createPost(values);
+	async function onSubmit(values: z.infer<typeof formSchema>) {
+		execute(values);
+
+		form.reset();
+	}
 
 	return (
 		<main>
@@ -50,7 +86,7 @@ const PostForm = () => {
 							</FormItem>
 						)}
 					/>
-					<Button type="submit" disabled={false}>
+					<Button type="submit" disabled={status === "executing"}>
 						Submit
 					</Button>
 				</form>
