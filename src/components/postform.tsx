@@ -10,6 +10,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { createPost } from "@/server/actions/create-post";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -27,12 +28,15 @@ const PostForm = () => {
 	});
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) =>
-		console.log(values);
+		createPost(values);
 
 	return (
 		<main>
 			<Form {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+				<form
+					onSubmit={form.handleSubmit(onSubmit)}
+					className="space-y-8 mx-auto max-w-4xl mt-10"
+				>
 					<FormField
 						control={form.control}
 						name="content"
